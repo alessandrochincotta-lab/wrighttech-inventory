@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Pages Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 2rem;
+            background: #f5f5f5;
+        }
+        .box {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>✅ GitHub Pages Test</h1>
+        <p>If you can see this page, GitHub Pages is working!</p>
+    </div>
+
+    <div class="box">
+        <h2>JavaScript Test</h2>
+        <p id="js-test">⏳ Testing JavaScript...</p>
+    </div>
+
+    <div class="box">
+        <h2>External Libraries Test</h2>
+        <p id="react-test">⏳ Testing React CDN...</p>
+        <p id="firebase-test">⏳ Testing Firebase CDN...</p>
+    </div>
+
+    <div class="box">
+        <h2>Next Steps</h2>
+        <ol id="steps">
+            <li>Take a screenshot of this page</li>
+            <li>Share it with Claude</li>
+            <li>We'll identify the issue!</li>
+        </ol>
+    </div>
+
+    <!-- Test React -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Test Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Test basic JavaScript
+        document.getElementById('js-test').innerHTML = '<span class="success">✅ JavaScript is working!</span>';
+        
+        // Test React
+        setTimeout(() => {
+            if (typeof React !== 'undefined') {
+                document.getElementById('react-test').innerHTML = '<span class="success">✅ React CDN loaded successfully!</span>';
+            } else {
+                document.getElementById('react-test').innerHTML = '<span class="error">❌ React failed to load from CDN</span>';
+            }
+        }, 1000);
+        
+        // Test Firebase
+        setTimeout(() => {
+            if (typeof firebase !== 'undefined') {
+                document.getElementById('firebase-test').innerHTML = '<span class="success">✅ Firebase CDN loaded successfully!</span>';
+            } else {
+                document.getElementById('firebase-test').innerHTML = '<span class="error">❌ Firebase failed to load from CDN</span>';
+            }
+        }, 1000);
+
+        // Log to console
+        console.log('=== DIAGNOSTIC TEST ===');
+        console.log('Page loaded successfully');
+        console.log('React available:', typeof React !== 'undefined');
+        console.log('Firebase available:', typeof firebase !== 'undefined');
+        console.log('======================');
+    </script>
+</body>
+</html>
