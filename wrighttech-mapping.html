@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WrightTech — Item Mapping Library</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.22.5/babel.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Georgia', serif; background: #f0ede8; color: #1a1a1a; min-height: 100vh; }
+
+        .topbar {
+            background: #1a1a1a;
+            color: white;
+            padding: 0 1.5rem;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 200;
+            border-bottom: 2px solid #ff9800;
+        }
+        .topbar-title { font-size: 0.95rem; font-weight: 700; letter-spacing: 0.03em; flex: 1; }
+        .topbar a { color: #ff9800; text-decoration: none; font-size: 0.8rem; font-family: 'Courier New', monospace; }
+
+        .summary-bar {
+            background: white;
+            border-bottom: 1px solid #e0dbd4;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+            position: sticky;
+            top: 52px;
+            z-index: 100;
+        }
+        .stat { display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; }
+        .stat-num { font-weight: 800; font-size: 1rem; font-family: 'Courier New', monospace; }
+        .stat-label { color: #888; }
+
+        .controls {
+            padding: 1rem 1.5rem;
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            align-items: center;
+            background: #f0ede8;
+        }
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+            padding: 0.5rem 0.75rem;
+            border: 1.5px solid #d0cbc3;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            background: white;
+            font-family: inherit;
+        }
+        .search-box:focus { outline: none; border-color: #ff9800; }
+
+        .filter-btn {
+            padding: 0.45rem 0.9rem;
+            border-radius: 6px;
+            border: 1.5px solid #d0cbc3;
+            background: white;
+            font-size: 0.82rem;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .filter-btn.active { background: #1a1a1a; color: white; border-color: #1a1a1a; }
+        .filter-btn:hover:not(.active) { border-color: #999; }
+
+        .content { padding: 0 1.5rem 2rem; }
+
+        .item-row {
+            background: white;
+            border-radius: 8px;
+            border: 1.5px solid #e8e3dc;
+            margin-bottom: 0.5rem;
+            overflow: hidden;
+            transition: border-color 0.15s;
+        }
+        .item-row:hover { border-color: #c8c3bc; }
+        .item-row.status-confirmed { border-left: 4px solid #4caf50; }
+        .item-row.status-ignored { border-left: 4px solid #bbb; opacity: 0.7; }
+        .item-row.status-remapped { border-left: 4px solid #2196f3; }
+        .item-row.status-unreviewed { border-left: 4px solid #ff9800; }
+
+        .item-main {
+            padding: 0.75rem 1rem;
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 0.75rem;
+            align-items: center;
+            cursor: pointer;
+        }
+        .item-names { min-width: 0; }
+        .lightspeed-name {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .matched-name {
+            font-size: 0.78rem;
+            color: #888;
+            margin-top: 0.15rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .match-badge {
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 0.15rem 0.45rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            white-space: nowrap;
+        }
+        .badge-exact { background: #e8f5e9; color: #2e7d32; }
+        .badge-fuzzy { background: #fff8e1; color: #f57f17; }
+        .badge-manual { background: #e3f2fd; color: #1565c0; }
+        .badge-ignored { background: #f5f5f5; color: #999; }
+        .badge-unreviewed { background: #fff3e0; color: #e65100; }
+
+        .status-icon { font-size: 1.1rem; }
+
+        .item-actions {
+            padding: 0 1rem 0.75rem;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            border-top: 1px solid #f0ede8;
+            padding-top: 0.75rem;
+        }
+        .action-btn {
+            padding: 0.4rem 0.85rem;
+            border-radius: 6px;
+            border: 1.5px solid;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+            transition: all 0.15s;
+        }
+        .btn-confirm { border-color: #4caf50; color: #2e7d32; background: #f1f8f1; }
+        .btn-confirm:hover { background: #4caf50; color: white; }
+        .btn-ignore { border-color: #bbb; color: #666; background: #fafafa; }
+        .btn-ignore:hover { background: #bbb; color: white; }
+        .btn-remap { border-color: #2196f3; color: #1565c0; background: #e8f4fd; }
+        .btn-remap:hover { background: #2196f3; color: white; }
+        .btn-active { background: #1a1a1a !important; color: white !important; border-color: #1a1a1a !important; }
+
+        .remap-panel {
+            padding: 0.75rem 1rem;
+            background: #f8f7f5;
+            border-top: 1px solid #e8e3dc;
+        }
+        .remap-label { font-size: 0.75rem; color: #888; margin-bottom: 0.4rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+        .remap-search {
+            width: 100%;
+            padding: 0.45rem 0.65rem;
+            border: 1.5px solid #d0cbc3;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            background: white;
+            font-family: inherit;
+            margin-bottom: 0.5rem;
+        }
+        .remap-search:focus { outline: none; border-color: #2196f3; }
+        .remap-options { max-height: 160px; overflow-y: auto; border-radius: 6px; border: 1px solid #e0dbd4; background: white; }
+        .remap-option {
+            padding: 0.5rem 0.65rem;
+            font-size: 0.83rem;
+            cursor: pointer;
+            border-bottom: 1px solid #f5f5f5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .remap-option:hover { background: #e3f2fd; }
+        .remap-option:last-child { border-bottom: none; }
+        .remap-cat { font-size: 0.72rem; color: #aaa; }
+
+        .empty { text-align: center; padding: 3rem; color: #aaa; font-size: 0.9rem; }
+        .loading { text-align: center; padding: 4rem; color: #888; }
+
+        .progress-bar-wrap { flex: 1; max-width: 200px; }
+        .progress-bar { height: 6px; background: #e8e3dc; border-radius: 3px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #ff9800, #4caf50); border-radius: 3px; transition: width 0.3s; }
+        .progress-label { font-size: 0.72rem; color: #888; margin-top: 0.2rem; text-align: right; }
+
+        .seed-banner {
+            background: #fff8e1;
+            border: 1.5px solid #ffe082;
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .seed-banner p { font-size: 0.85rem; color: #795548; flex: 1; }
+        .seed-btn {
+            padding: 0.5rem 1.25rem;
+            background: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+
+        select { font-family: inherit; }
+        input { font-family: inherit; }
+    </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyCWvAkAfDCkljNQmTyQsrhES7pm4H751EQ",
+        authDomain: "wrighttech-inventory.firebaseapp.com",
+        projectId: "wrighttech-inventory",
+        storageBucket: "wrighttech-inventory.firebasestorage.app",
+        messagingSenderId: "891021456690",
+        appId: "1:891021456690:web:e81d5b7ff36dd3f687532b"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    window.db = firebase.firestore();
+</script>
+
+<script type="text/babel">
+const { useState, useEffect, useMemo } = React;
+
+function MappingLibrary() {
+    const [mappings, setMappings] = useState([]);
+    const [inventory, setInventory] = useState([]);
+    const [salesHistory, setSalesHistory] = useState([]);
+    const [pendingMappings, setPendingMappings] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [seeding, setSeeding] = useState(false);
+    const [saving, setSaving] = useState({});
+
+    const [filter, setFilter] = useState('all');
+    const [search, setSearch] = useState('');
+    const [expanded, setExpanded] = useState(null);
+    const [remapSearch, setRemapSearch] = useState('');
+    const [expandedPending, setExpandedPending] = useState(null);
+    const [pendingSearch, setPendingSearch] = useState('');
+    const [pendingOpen, setPendingOpen] = useState(true);
+
+    useEffect(() => {
+        let loaded = 0;
+        const done = () => { loaded++; if (loaded >= 3) setLoading(false); }; // Only wait for 3 critical collections
+        window.db.collection('lightspeedMappings').onSnapshot(s => { setMappings(s.docs.map(d => ({ id: d.id, ...d.data() }))); done(); });
+        window.db.collection('inventory').onSnapshot(s => { setInventory(s.docs.map(d => ({ id: d.id, ...d.data() }))); done(); });
+        window.db.collection('salesHistory').onSnapshot(s => { setSalesHistory(s.docs.map(d => ({ id: d.id, ...d.data() }))); }); // loads in background
+        window.db.collection('pendingMappings').where('status', '==', 'pending').onSnapshot(s => { setPendingMappings(s.docs.map(d => ({ id: d.id, ...d.data() }))); done(); });
+    }, []);
+
+    // Seed library from salesHistory
+    const seedFromHistory = async () => {
+        setSeeding(true);
+        try {
+            // Build unique lightspeed names from history
+            const seen = {};
+            salesHistory.forEach(r => {
+                const ls = r.lightspeedName || r.itemName;
+                if (!ls) return;
+                if (!seen[ls]) {
+                    seen[ls] = {
+                        lightspeedName: ls,
+                        matchedInventoryName: r.itemName || '',
+                        matchType: r.matchType || 'exact',
+                        matchScore: r.matchScore || 100,
+                        status: 'unreviewed',
+                        lastSeen: r.weekEnding || r.importDate || '',
+                        timesImported: 0
+                    };
+                }
+                seen[ls].timesImported++;
+                if ((r.weekEnding || '') > seen[ls].lastSeen) seen[ls].lastSeen = r.weekEnding || r.importDate || '';
+            });
+
+            // Only add ones not already in library
+            const existingNames = new Set(mappings.map(m => m.lightspeedName));
+            const toAdd = Object.values(seen).filter(item => !existingNames.has(item.lightspeedName));
+
+            const batch = window.db.batch();
+            toAdd.forEach(item => {
+                const ref = window.db.collection('lightspeedMappings').doc();
+                batch.set(ref, { ...item, createdAt: new Date().toISOString(), source: 'seeded_from_history' });
+            });
+            await batch.commit();
+            alert(`✅ Seeded ${toAdd.length} items from sales history. ${existingNames.size} already existed.`);
+        } catch (e) {
+            alert('❌ Error seeding: ' + e.message);
+        }
+        setSeeding(false);
+    };
+
+    const updateMapping = async (id, updates) => {
+        setSaving(p => ({ ...p, [id]: true }));
+        try {
+            await window.db.collection('lightspeedMappings').doc(id).update({ ...updates, updatedAt: new Date().toISOString() });
+        } catch (e) {
+            alert('Error saving: ' + e.message);
+        }
+        setSaving(p => ({ ...p, [id]: false }));
+    };
+
+    const confirm = async (m) => {
+        await updateMapping(m.id, { status: 'confirmed' });
+        setExpanded(null);
+    };
+
+    const ignore = async (m) => {
+        await updateMapping(m.id, { status: 'ignored', matchedInventoryName: '' });
+        setExpanded(null);
+    };
+
+    const remap = async (m, invItem) => {
+        await updateMapping(m.id, {
+            status: 'confirmed',
+            matchedInventoryName: invItem.name,
+            matchedInventoryId: invItem.id,
+            matchType: 'manual',
+            matchScore: 100
+        });
+        setExpanded(null);
+        setRemapSearch('');
+    };
+
+    const unreviewed = mappings.filter(m => m.status === 'unreviewed').length;
+    const confirmed = mappings.filter(m => m.status === 'confirmed' || m.status === 'remapped').length;
+    const ignored = mappings.filter(m => m.status === 'ignored').length;
+    const total = mappings.length;
+    const reviewed = confirmed + ignored;
+    const progress = total > 0 ? Math.round((reviewed / total) * 100) : 0;
+
+    const filtered = useMemo(() => {
+        return mappings
+            .filter(m => {
+                if (filter === 'unreviewed') return m.status === 'unreviewed';
+                if (filter === 'confirmed') return m.status === 'confirmed' || m.status === 'remapped';
+                if (filter === 'ignored') return m.status === 'ignored';
+                return true;
+            })
+            .filter(m => {
+                if (!search) return true;
+                const s = search.toLowerCase();
+                return (m.lightspeedName || '').toLowerCase().includes(s) ||
+                       (m.matchedInventoryName || '').toLowerCase().includes(s);
+            })
+            .sort((a, b) => {
+                // Unreviewed first
+                const order = { unreviewed: 0, confirmed: 1, remapped: 1, ignored: 2 };
+                return (order[a.status] || 0) - (order[b.status] || 0);
+            });
+    }, [mappings, filter, search]);
+
+    const remapOptions = useMemo(() => {
+        if (!remapSearch) return inventory.slice(0, 30).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        const s = remapSearch.toLowerCase();
+        return inventory.filter(i => (i.name || '').toLowerCase().includes(s)).slice(0, 40);
+    }, [inventory, remapSearch]);
+
+    const statusIcon = (status) => ({ confirmed: '✅', ignored: '🚫', remapped: '✅', unreviewed: '⚠️' }[status] || '⚠️');
+
+    const matchBadge = (m) => {
+        if (m.status === 'ignored') return <span className="match-badge badge-ignored">IGNORED</span>;
+        if (m.matchType === 'manual') return <span className="match-badge badge-manual">MANUAL</span>;
+        if (m.matchType === 'fuzzy') return <span className="match-badge badge-fuzzy">FUZZY {m.matchScore ? Math.round(m.matchScore) + '%' : ''}</span>;
+        if (m.status === 'unreviewed') return <span className="match-badge badge-unreviewed">UNREVIEWED</span>;
+        return <span className="match-badge badge-exact">EXACT</span>;
+    };
+
+    if (loading) return <div className="loading">⏳ Loading mapping library...</div>;
+
+    const needsSeed = salesHistory.length > 0 && mappings.length === 0;
+    const canSeedMore = salesHistory.length > 0 && mappings.length > 0;
+
+    const dismissPending = async (id) => {
+        await window.db.collection('pendingMappings').doc(id).update({ status: 'dismissed', dismissedAt: new Date().toISOString() });
+    };
+
+    const addPendingToLibrary = async (pending, invItem) => {
+        const batch = window.db.batch();
+        batch.set(window.db.collection('lightspeedMappings').doc(), {
+            lightspeedName: pending.lightspeedName, lightspeedCategory: pending.lightspeedCategory || '',
+            sku: pending.sku || '', matchedInventoryName: invItem ? invItem.name : '',
+            matchedInventoryId: invItem ? invItem.id : '',
+            status: invItem ? 'confirmed' : 'ignored', matchType: 'manual', matchScore: 100,
+            timesImported: 0, lastSeen: pending.firstSeenWeek || '',
+            createdAt: new Date().toISOString(), source: 'added_from_pending'
+        });
+        batch.update(window.db.collection('pendingMappings').doc(pending.id), { status: 'resolved', resolvedAt: new Date().toISOString() });
+        await batch.commit();
+    };
+
+    return (
+        <div>
+            <div className="topbar">
+                <a href="javascript:history.back()">← Inventory</a>
+                <div className="topbar-title">📚 Item Mapping Library</div>
+                <span style={{ fontSize: '0.75rem', color: '#888', fontFamily: 'Courier New' }}>{total} items</span>
+            </div>
+
+            <div className="summary-bar">
+                <div className="stat">
+                    <span className="stat-num" style={{ color: '#ff9800' }}>{unreviewed}</span>
+                    <span className="stat-label">to review</span>
+                </div>
+                <div className="stat">
+                    <span className="stat-num" style={{ color: '#4caf50' }}>{confirmed}</span>
+                    <span className="stat-label">confirmed</span>
+                </div>
+                <div className="stat">
+                    <span className="stat-num" style={{ color: '#999' }}>{ignored}</span>
+                    <span className="stat-label">ignored</span>
+                </div>
+                <div className="progress-bar-wrap">
+                    <div className="progress-bar"><div className="progress-fill" style={{ width: progress + '%' }} /></div>
+                    <div className="progress-label">{progress}% reviewed</div>
+                </div>
+                {canSeedMore && (
+                    <button className="seed-btn" onClick={seedFromHistory} disabled={seeding} style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem', background: '#555' }}>
+                        {seeding ? '...' : '+ Sync from History'}
+                    </button>
+                )}
+            </div>
+
+            <div className="controls">
+                <input className="search-box" placeholder="🔍 Search Lightspeed name or inventory item..." value={search} onChange={e => setSearch(e.target.value)} />
+                {[
+                    { key: 'all', label: 'All (' + total + ')' },
+                    { key: 'unreviewed', label: '⚠️ To Review (' + unreviewed + ')' },
+                    { key: 'confirmed', label: '✅ Confirmed (' + confirmed + ')' },
+                    { key: 'ignored', label: '🚫 Ignored (' + ignored + ')' },
+                ].map(f => (
+                    <button key={f.key} className={'filter-btn' + (filter === f.key ? ' active' : '')} onClick={() => setFilter(f.key)}>{f.label}</button>
+                ))}
+            </div>
+
+            <div className="content">
+                {needsSeed && (
+                    <div className="seed-banner">
+                        <p>📥 Your sales history has data but the mapping library is empty. Seed it now to review all your Lightspeed items at once.</p>
+                        <button className="seed-btn" onClick={seedFromHistory} disabled={seeding}>{seeding ? 'Seeding...' : '🌱 Seed from Sales History'}</button>
+                    </div>
+                )}
+
+                {pendingMappings.length > 0 && (
+                    <div style={{ background: '#fff8e1', border: '1.5px solid #ffe082', borderRadius: '8px', marginBottom: '1rem', overflow: 'hidden' }}>
+                        <div onClick={() => setPendingOpen(p => !p)}
+                            style={{ padding: '0.75rem 1.25rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', userSelect: 'none' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                <span style={{ fontWeight: '700', fontSize: '0.9rem', color: '#e65100' }}>🚩 Flagged for Review</span>
+                                <span style={{ background: '#ff9800', color: 'white', borderRadius: '10px', padding: '0.1rem 0.5rem', fontSize: '0.72rem', fontWeight: '800' }}>{pendingMappings.length}</span>
+                            </div>
+                            <span style={{ color: '#bbb', fontSize: '0.8rem' }}>{pendingOpen ? '▼' : '▶'}</span>
+                        </div>
+                        {pendingOpen && (
+                            <div style={{ borderTop: '1px solid #ffe082' }}>
+                                <div style={{ padding: '0.5rem 1.25rem', fontSize: '0.78rem', color: '#888', borderBottom: '1px solid #fff3cd' }}>
+                                    Items flagged during import. Add to library, ignore permanently, or dismiss.
+                                </div>
+                                {pendingMappings.map(p => (
+                                    <div key={p.id} style={{ padding: '0.65rem 1.25rem', borderBottom: '1px solid #fff3cd', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <div style={{ fontWeight: '700', fontSize: '0.85rem', color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.lightspeedName}</div>
+                                            <div style={{ fontSize: '0.72rem', color: '#aaa' }}>{p.lightspeedCategory || ''}{p.quantitySold ? ' · ' + p.quantitySold + ' sold' : ''}{p.firstSeenWeek ? ' · week of ' + p.firstSeenWeek : ''}</div>
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                                            <button onClick={() => addPendingToLibrary(p, null)}
+                                                style={{ padding: '0.25rem 0.6rem', borderRadius: '5px', border: '1.5px solid #bbb', fontSize: '0.75rem', cursor: 'pointer', background: 'white', color: '#666', fontFamily: 'inherit', fontWeight: '600' }}>
+                                                🚫 Ignore permanently
+                                            </button>
+                                            <button onClick={() => { setExpandedPending(expandedPending === p.id ? null : p.id); setPendingSearch(''); }}
+                                                style={{ padding: '0.25rem 0.6rem', borderRadius: '5px', border: '1.5px solid #2196f3', fontSize: '0.75rem', cursor: 'pointer', background: expandedPending === p.id ? '#1565c0' : '#e3f2fd', color: expandedPending === p.id ? 'white' : '#1565c0', fontFamily: 'inherit', fontWeight: '600' }}>
+                                                🔄 {expandedPending === p.id ? 'Cancel' : 'Map to inventory item'}
+                                            </button>
+                                            <button onClick={() => dismissPending(p.id)}
+                                                style={{ padding: '0.25rem 0.6rem', borderRadius: '5px', border: '1.5px solid #e0e0e0', fontSize: '0.75rem', cursor: 'pointer', background: 'white', color: '#aaa', fontFamily: 'inherit', fontWeight: '600' }}>
+                                                Dismiss
+                                            </button>
+                                        </div>
+                                        {expandedPending === p.id && (
+                                            <div style={{ width: '100%', padding: '0.75rem 0 0.25rem', borderTop: '1px solid #fff3cd', marginTop: '0.5rem' }}>
+                                                <div style={{ fontSize: '0.72rem', fontWeight: '700', color: '#888', textTransform: 'uppercase', marginBottom: '0.35rem' }}>Select inventory item for "{p.lightspeedName}"</div>
+                                                <input
+                                                    autoFocus
+                                                    className="remap-search"
+                                                    placeholder="Type to search inventory..."
+                                                    value={pendingSearch}
+                                                    onChange={e => setPendingSearch(e.target.value)}
+                                                />
+                                                <div className="remap-options">
+                                                    {(() => {
+                                                        const opts = pendingSearch
+                                                            ? inventory.filter(i => (i.name || '').toLowerCase().includes(pendingSearch.toLowerCase())).slice(0, 40)
+                                                            : inventory.slice(0, 30).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                                                        if (!opts.length) return <div style={{ padding: '0.75rem', color: '#aaa', fontSize: '0.83rem' }}>No items match.</div>;
+                                                        return opts.map(inv => (
+                                                            <div key={inv.id} className="remap-option" onClick={() => {
+                                                                addPendingToLibrary(p, inv);
+                                                                setExpandedPending(null);
+                                                                setPendingSearch('');
+                                                            }}>
+                                                                <span>{inv.name}</span>
+                                                                <span className="remap-cat">{inv.category || ''}</span>
+                                                            </div>
+                                                        ));
+                                                    })()}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {filtered.length === 0 && !needsSeed && (
+                    <div className="empty">
+                        {search ? 'No items match your search.' : filter === 'unreviewed' ? '🎉 All items reviewed!' : 'No items here.'}
+                    </div>
+                )}
+
+                {filtered.map(m => {
+                    const isExpanded = expanded === m.id || expanded === m.id + '_remap';
+                    const isRemapping = expanded === m.id + '_remap';
+
+                    return (
+                        <div key={m.id} className={'item-row status-' + (m.status || 'unreviewed')}>
+                            <div className="item-main" onClick={() => setExpanded(isExpanded ? null : m.id)}>
+                                <div className="item-names">
+                                    <div className="lightspeed-name">{m.lightspeedName}</div>
+                                    <div className="matched-name">
+                                        {m.status === 'ignored'
+                                            ? '🚫 Not imported'
+                                            : m.matchedInventoryName
+                                                ? '→ ' + m.matchedInventoryName
+                                                : '— no match —'}
+                                        {m.timesImported ? <span style={{ color: '#bbb', marginLeft: '0.5rem' }}>· {m.timesImported}× imported</span> : null}
+                                    </div>
+                                </div>
+                                {matchBadge(m)}
+                                <span className="status-icon">{saving[m.id] ? '⏳' : statusIcon(m.status)}</span>
+                            </div>
+
+                            {isExpanded && (
+                                <div>
+                                    <div className="item-actions">
+                                        <button className={'action-btn btn-confirm' + (m.status === 'confirmed' ? ' btn-active' : '')}
+                                            onClick={() => confirm(m)}>
+                                            ✅ {m.status === 'confirmed' ? 'Confirmed' : 'Confirm Match'}
+                                        </button>
+                                        <button className={'action-btn btn-ignore' + (m.status === 'ignored' ? ' btn-active' : '')}
+                                            onClick={() => ignore(m)}>
+                                            🚫 {m.status === 'ignored' ? 'Ignored' : 'Ignore'}
+                                        </button>
+                                        <button className={'action-btn btn-remap' + (isRemapping ? ' btn-active' : '')}
+                                            onClick={() => { setExpanded(isRemapping ? m.id : m.id + '_remap'); setRemapSearch(''); }}>
+                                            🔄 Remap to Different Item
+                                        </button>
+                                    </div>
+
+                                    {isRemapping && (
+                                        <div className="remap-panel">
+                                            <div className="remap-label">Select correct inventory item for "{m.lightspeedName}"</div>
+                                            <input className="remap-search" placeholder="Type to search inventory..." value={remapSearch} onChange={e => setRemapSearch(e.target.value)} autoFocus />
+                                            <div className="remap-options">
+                                                {remapOptions.map(inv => (
+                                                    <div key={inv.id} className="remap-option" onClick={() => remap(m, inv)}>
+                                                        <span>{inv.name}</span>
+                                                        <span className="remap-cat">{inv.category || ''}</span>
+                                                    </div>
+                                                ))}
+                                                {remapOptions.length === 0 && <div style={{ padding: '0.75rem', color: '#aaa', fontSize: '0.83rem' }}>No inventory items match.</div>}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
+ReactDOM.render(<MappingLibrary />, document.getElementById('root'));
+</script>
+</body>
+</html>
