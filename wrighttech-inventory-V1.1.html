@@ -1787,9 +1787,11 @@
             React.useEffect(() => {
                 const unsub = window.db.collection('pendingDeliveries')
                     .where('status', '==', 'pending')
-                    .orderBy('submittedAt', 'desc')
                     .onSnapshot(snap => {
-                        setPendingDeliveries(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+                        const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                        // Sort client-side to avoid needing composite index
+                        docs.sort((a,b) => (b.submittedAt||'').localeCompare(a.submittedAt||''));
+                        setPendingDeliveries(docs);
                     });
                 return () => unsub();
             }, []);

@@ -510,6 +510,7 @@ function openDeliverySheet(supplier) {
     supplier,
     items: items.map(item => ({
       ...item,
+      deliveryStatus: 'full',
       qtyReceived: item.quantityToOrder || 0,
       shopQty: item.quantityToOrder || 0,
       storeQty: 0
@@ -724,10 +725,11 @@ async function confirmDelivery() {
       closeOverlay('delivery-overlay');
       activeDelivery = null;
       showToast(`✅ ${pendingItems.length} item${pendingItems.length!==1?'s':''} sent for confirmation`);
-      renderOrders();
+      renderDeliveries();
     } catch(e) {
-      btn.disabled = false; btn.textContent = '✅ Confirm Delivery';
-      alert('Error: ' + e.message);
+      btn.disabled = false; btn.textContent = '📤 Submit for Confirmation';
+      alert('Error submitting delivery: ' + e.message + '\n\nPlease try again or contact Sandro.');
+      console.error('Delivery error:', e);
     }
   })();
 }
@@ -841,11 +843,12 @@ function renderUlQueue() {
         <div>
           <div style="font-size:11px;color:#888;font-weight:600;margin-bottom:3px;">🏪 Shop</div>
           <input type="number" min="0" value="${entry.toShop}" oninput="ulUpdateShop(${idx}, this.value)"
+            data-ul-shop="${idx}"
             style="width:100%;padding:6px;border:1px solid #ddd;border-radius:5px;font-size:15px;text-align:center;">
         </div>
         <div>
           <div style="font-size:11px;color:#2196f3;font-weight:600;margin-bottom:3px;">📦 Store</div>
-          <div style="padding:6px;border:1px solid #bbdefb;border-radius:5px;background:#e3f2fd;color:#1565c0;font-size:15px;font-weight:600;text-align:center;">${entry.toStore}</div>
+          <div data-ul-store="${idx}" style="padding:6px;border:1px solid #bbdefb;border-radius:5px;background:#e3f2fd;color:#1565c0;font-size:15px;font-weight:600;text-align:center;">${entry.toStore}</div>
         </div>
       </div>
     </div>
@@ -857,14 +860,20 @@ function ulUpdateQty(idx, val) {
   ulQueue[idx].qty = qty;
   ulQueue[idx].toShop = qty;
   ulQueue[idx].toStore = 0;
-  renderUlQueue();
+  // Update dependent fields without re-rendering (avoids losing keyboard focus)
+  const shopEl = document.querySelector(`[data-ul-shop="${idx}"]`);
+  const storeEl = document.querySelector(`[data-ul-store="${idx}"]`);
+  if (shopEl) shopEl.value = qty;
+  if (storeEl) storeEl.textContent = 0;
 }
 
 function ulUpdateShop(idx, val) {
   const shop = Math.max(0, Math.min(parseInt(val) || 0, ulQueue[idx].qty));
   ulQueue[idx].toShop = shop;
   ulQueue[idx].toStore = Math.max(0, ulQueue[idx].qty - shop);
-  renderUlQueue();
+  // Update store display without re-rendering
+  const storeEl = document.querySelector(`[data-ul-store="${idx}"]`);
+  if (storeEl) storeEl.textContent = ulQueue[idx].toStore;
 }
 
 function ulRemove(idx) {
