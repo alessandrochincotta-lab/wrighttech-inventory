@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>WrightTech Deliveries</title>
+<style>
+:root {
+  --black: #1a1a1a;
+  --orange: #e8832a;
+  --orange-light: #fdf3e7;
+  --orange-dark: #c06a18;
+  --red: #c0392b;
+  --red-light: #fdf0ed;
+  --green: #27ae60;
+  --green-light: #eafaf1;
+  --blue: #2471a3;
+  --blue-light: #eaf4fb;
+  --bg: #f5f3ef;
+  --card: #ffffff;
+  --border: #e0ddd6;
+  --text: #1a1a1a;
+  --muted: #888;
+  --light: #bbb;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; max-width: 480px; margin: 0 auto; min-height: 100vh; }
+
+/* AUTH */
+#auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; background: var(--black); }
+.auth-logo-wrap { text-align: center; margin-bottom: 2rem; }
+.auth-eyebrow { color: #fff; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; opacity: 0.4; margin-bottom: 6px; }
+.auth-appname { color: #fff; font-size: 22px; font-weight: 500; }
+.auth-appsub { color: var(--orange); font-size: 13px; margin-top: 4px; opacity: 0.9; }
+.auth-card { background: #fff; border-radius: 16px; padding: 1.5rem; width: 100%; max-width: 320px; }
+.auth-title { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+.auth-sub { font-size: 13px; color: var(--muted); margin-bottom: 1.25rem; }
+.auth-input { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 16px; margin-bottom: 10px; outline: none; }
+.auth-input:focus { border-color: var(--orange); }
+.auth-remember { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; cursor: pointer; }
+.auth-remember input { width: 16px; height: 16px; accent-color: var(--black); cursor: pointer; }
+.auth-remember span { font-size: 13px; color: var(--muted); }
+.auth-btn { width: 100%; padding: 13px; background: var(--black); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 15px; font-weight: 500; cursor: pointer; }
+.auth-error { font-size: 12px; color: var(--red); margin-top: 8px; text-align: center; min-height: 16px; }
+
+/* APP */
+#app-screen { display: none; flex-direction: column; min-height: 100vh; }
+
+/* HEADER */
+.app-header { background: var(--black); padding: 14px 16px 0; flex-shrink: 0; }
+.app-header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.header-brand-sub { color: #fff; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; opacity: 0.4; }
+.header-brand-name { color: #fff; font-size: 16px; font-weight: 500; }
+.header-actions { display: flex; gap: 8px; align-items: center; }
+.logout-btn { background: none; border: none; color: rgba(255,255,255,0.4); font-size: 12px; cursor: pointer; padding: 4px 6px; }
+
+/* TABS */
+.tabs { display: flex; padding: 0 6px 10px; gap: 4px; }
+.tab { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 7px 4px 6px; border-radius: 10px; cursor: pointer; transition: background 0.15s; gap: 3px; position: relative; }
+.tab.active { background: var(--orange); }
+.tab-icon { font-size: 18px; opacity: 0.4; }
+.tab.active .tab-icon { opacity: 1; }
+.tab span { font-size: 9px; color: #fff; opacity: 0.4; letter-spacing: 0.5px; text-transform: uppercase; }
+.tab.active span { opacity: 1; }
+.tab-badge { position: absolute; top: 4px; right: 10px; background: var(--red); color: white; font-size: 9px; font-weight: 800; min-width: 16px; height: 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 0 4px; border: 1.5px solid var(--black); }
+
+/* CONTENT */
+.content { flex: 1; padding: 12px; overflow-y: auto; padding-bottom: 80px; }
+.panel { display: none; flex-direction: column; gap: 10px; }
+.panel.active { display: flex; }
+
+/* SECTION LABEL */
+.section-label { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; padding: 6px 2px 2px; }
+
+/* SUMMARY BANNER */
+.summary-banner { background: var(--black); border-radius: var(--radius); padding: 13px 15px; display: flex; gap: 1.5rem; align-items: center; }
+.summary-stat { text-align: center; }
+.summary-num { font-size: 24px; font-weight: 600; color: #fff; line-height: 1; }
+.summary-num.orange { color: var(--orange); }
+.summary-label { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px; }
+.summary-divider { width: 1px; background: rgba(255,255,255,0.1); height: 32px; }
+
+/* SUPPLIER CARD */
+.supplier-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 11px 13px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.supplier-card:active { background: #fafaf8; }
+.supplier-initial { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; flex-shrink: 0; }
+.supplier-info { flex: 1; min-width: 0; }
+.supplier-name { font-size: 14px; font-weight: 500; }
+.supplier-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.supplier-chevron { color: var(--light); font-size: 16px; flex-shrink: 0; }
+
+/* ITEM CARD in sheet */
+.delivery-item { border-bottom: 1px solid #f5f3ef; padding: 12px 0; }
+.delivery-item:last-child { border-bottom: none; }
+.delivery-item-name { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
+.delivery-item-meta { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
+.delivery-item-meta .unlogged-tag { background: var(--orange-light); color: var(--orange-dark); font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 4px; margin-left: 4px; }
+
+/* QTY INPUTS */
+.qty-row { display: flex; flex-direction: column; gap: 10px; }
+.qty-block { }
+.qty-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+.qty-input-large { width: 110px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 22px; font-weight: 500; text-align: center; outline: none; background: #fafafa; }
+.qty-input-large:focus { border-color: var(--orange); background: #fff; }
+.qty-input-large.changed { border-color: var(--orange); background: var(--orange-light); }
+.split-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.split-block { }
+.split-label { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 4px; }
+.split-input { width: 100%; padding: 9px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 16px; font-weight: 500; text-align: center; outline: none; background: #fafafa; }
+.split-input:focus { border-color: var(--orange); background: #fff; }
+.split-input.readonly { background: var(--blue-light); color: var(--blue); border-color: #b3d4eb; }
+.split-remaining { font-size: 12px; font-weight: 600; margin-top: 5px; }
+.split-remaining.ok { color: var(--green); }
+.split-remaining.warn { color: var(--red); }
+.variance-note { font-size: 11px; margin-top: 5px; font-weight: 500; }
+.variance-note.short { color: var(--red); }
+.variance-note.over { color: var(--green); }
+
+/* SEARCH */
+.search-wrap { position: relative; }
+.search-input { width: 100%; padding: 10px 12px 10px 36px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; background: #fff; outline: none; }
+.search-input:focus { border-color: var(--orange); }
+.search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--light); font-size: 16px; pointer-events: none; }
+
+/* ITEM CARD (search/move) */
+.item-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 11px 13px; display: flex; align-items: center; gap: 10px; }
+.item-left { flex: 1; min-width: 0; }
+.item-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.item-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.item-right { text-align: right; flex-shrink: 0; }
+.item-qty { font-size: 20px; font-weight: 500; line-height: 1; }
+.item-unit { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.stock-pills { display: flex; gap: 5px; margin-top: 4px; flex-wrap: wrap; }
+.pill { font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 5px; }
+.pill-shop { background: var(--orange-light); color: var(--orange-dark); }
+.pill-store { background: var(--blue-light); color: var(--blue); }
+
+/* MOVE STOCK */
+.move-input-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+.move-input { flex: 1; padding: 9px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 16px; font-weight: 500; text-align: center; outline: none; background: #fafafa; }
+.move-input:focus { border-color: var(--blue); }
+.move-btn { padding: 9px 14px; background: var(--black); color: white; border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.move-btn:active { opacity: 0.8; }
+
+/* MODALS */
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 100; align-items: flex-end; justify-content: center; max-width: 480px; margin: 0 auto; }
+.overlay.open { display: flex; }
+.sheet { background: #fff; border-radius: 20px 20px 0 0; padding: 20px 16px 36px; width: 100%; animation: slideUp 0.2s ease; max-height: 92vh; overflow-y: auto; }
+@keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.sheet-handle { width: 36px; height: 4px; background: #ddd; border-radius: 2px; margin: 0 auto 16px; }
+.sheet-title { font-size: 17px; font-weight: 500; margin-bottom: 3px; }
+.sheet-sub { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+
+/* BUTTONS */
+.btn-primary { width: 100%; padding: 13px; border-radius: 11px; background: var(--black); color: #fff; border: none; font-size: 15px; font-weight: 500; cursor: pointer; margin-top: 4px; }
+.btn-primary:active { opacity: 0.85; }
+.btn-primary:disabled { background: #ccc; cursor: not-allowed; }
+.btn-confirm-green { width: 100%; padding: 13px; border-radius: 11px; background: var(--green); color: #fff; border: none; font-size: 15px; font-weight: 500; cursor: pointer; }
+.btn-confirm-green:active { opacity: 0.85; }
+.btn-confirm-green:disabled { background: #ccc; cursor: not-allowed; }
+.btn-ghost { width: 100%; padding: 11px; border-radius: 11px; background: none; border: none; font-size: 14px; color: var(--muted); cursor: pointer; margin-top: 4px; }
+.btn-danger { width: 100%; padding: 11px; border-radius: 11px; background: var(--red-light); color: var(--red); border: none; font-size: 14px; font-weight: 500; cursor: pointer; margin-top: 8px; }
+.modal-actions { display: flex; gap: 10px; margin-top: 12px; }
+.btn-cancel { flex: 1; padding: 13px; border-radius: 11px; border: 1px solid var(--border); background: #f5f5f5; font-size: 14px; color: var(--muted); cursor: pointer; }
+.btn-confirm { flex: 2; padding: 13px; border-radius: 11px; border: none; background: var(--black); font-size: 14px; color: #fff; cursor: pointer; font-weight: 500; }
+
+/* FORM */
+.form-label { font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 5px; display: block; letter-spacing: 0.3px; }
+.form-input { width: 100%; padding: 11px 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 15px; margin-bottom: 12px; outline: none; background: #fafafa; }
+.form-input:focus { border-color: var(--orange); background: #fff; }
+
+/* LOG UNTRACKED */
+.log-untracked-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 11px 13px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.log-untracked-card:active { background: #fafaf8; }
+.log-untracked-icon { width: 34px; height: 34px; border-radius: 8px; background: var(--orange-light); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.log-untracked-info { flex: 1; }
+.log-untracked-title { font-size: 14px; font-weight: 500; }
+.log-untracked-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+/* EMPTY / LOADING */
+.empty { text-align: center; padding: 3rem 1rem; color: var(--muted); font-size: 14px; }
+.loading { display: flex; align-items: center; justify-content: center; padding: 3rem; gap: 10px; color: var(--muted); font-size: 14px; }
+.spinner { width: 24px; height: 24px; border: 2.5px solid var(--border); border-top-color: var(--orange); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* SEARCH RESULTS DROPDOWN */
+.search-results-drop { border: 1px solid var(--border); border-radius: var(--radius-sm); background: #fff; overflow: hidden; margin-top: 6px; max-height: 220px; overflow-y: auto; }
+.search-result-row { padding: 11px 13px; border-bottom: 1px solid #f5f3ef; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+.search-result-row:last-child { border-bottom: none; }
+.search-result-row:active { background: #fafaf8; }
+.search-result-name { font-size: 14px; font-weight: 500; }
+.search-result-meta { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--black); color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 500; z-index: 300; opacity: 0; transition: opacity 0.2s; pointer-events: none; white-space: nowrap; max-width: 90vw; text-align: center; }
+.toast.show { opacity: 1; }
+
+.divider { border: none; border-top: 1px solid #eee; margin: 14px 0; }
+</style>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCWvAkAfDCkljNQmTyQsrhES7pm4H751EQ",
+  authDomain: "wrighttech-inventory.firebaseapp.com",
+  projectId: "wrighttech-inventory",
+  storageBucket: "wrighttech-inventory.firebasestorage.app",
+  messagingSenderId: "891021456690",
+  appId: "1:891021456690:web:e81d5b7ff36dd3f687532b"
+};
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+</script>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth-screen">
+  <div class="auth-logo-wrap">
+    <div class="auth-eyebrow">WWII Tunnels · Gibraltar</div>
+    <div class="auth-appname">WrightTech</div>
+    <div class="auth-appsub">Deliveries &amp; Stock</div>
+  </div>
+  <div class="auth-card">
+    <div class="auth-title">Sign in</div>
+    <div class="auth-sub">Enter your password to continue</div>
+    <input class="auth-input" type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')doAuth()">
+    <label class="auth-remember">
+      <input type="checkbox" id="remember-me">
+      <span>Keep me signed in</span>
+    </label>
+    <button class="auth-btn" onclick="doAuth()">Sign In</button>
+    <div class="auth-error" id="auth-error"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-screen">
+  <div class="app-header">
+    <div class="app-header-top">
+      <div>
+        <div class="header-brand-sub">WWII Tunnels</div>
+        <div class="header-brand-name">Deliveries &amp; Stock</div>
+      </div>
+      <div class="header-actions">
+        <button class="logout-btn" onclick="doLogout()">Sign out</button>
+      </div>
+    </div>
+    <div class="tabs">
+      <div class="tab active" id="tab-deliveries" onclick="switchTab('deliveries')">
+        <div class="tab-icon">📦</div>
+        <span>Deliveries</span>
+        <div class="tab-badge" id="delivery-badge" style="display:none">0</div>
+      </div>
+      <div class="tab" id="tab-move" onclick="switchTab('move')">
+        <div class="tab-icon">↗️</div>
+        <span>Move Stock</span>
+      </div>
+      <div class="tab" id="tab-search" onclick="switchTab('search')">
+        <div class="tab-icon">🔍</div>
+        <span>Search</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- DELIVERIES -->
+    <div class="panel active" id="panel-deliveries">
+      <div id="delivery-summary" style="display:none;"></div>
+      <div id="deliveries-list"><div class="loading"><div class="spinner"></div>Loading orders…</div></div>
+      <div class="log-untracked-card" onclick="openUnloggedSheet()">
+        <div class="log-untracked-icon">➕</div>
+        <div class="log-untracked-info">
+          <div class="log-untracked-title">Log untracked delivery</div>
+          <div class="log-untracked-sub">Item arrived without a prior order</div>
+        </div>
+        <div style="color:var(--light);font-size:16px;">›</div>
+      </div>
+    </div>
+
+    <!-- MOVE STOCK -->
+    <div class="panel" id="panel-move">
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input class="search-input" type="search" id="move-search" placeholder="Search Big Store items…" oninput="renderMove()">
+      </div>
+      <div id="move-list"><div class="loading"><div class="spinner"></div>Loading…</div></div>
+    </div>
+
+    <!-- SEARCH -->
+    <div class="panel" id="panel-search">
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input class="search-input" type="search" id="inv-search" placeholder="Search inventory…" oninput="renderSearch()">
+      </div>
+      <div id="search-list"><div class="empty">Search for any item</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- DELIVERY SHEET -->
+<div class="overlay" id="delivery-overlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="ds-title"></div>
+    <div class="sheet-sub" id="ds-sub"></div>
+    <div id="ds-items"></div>
+    <hr class="divider">
+    <button class="btn-ghost" style="margin-bottom:6px;" onclick="openAddItemToDelivery()">＋ Add item not on order</button>
+    <p style="font-size:12px;color:#888;text-align:center;margin:8px 0 6px;line-height:1.4;">Items will be checked by your manager before stock is updated</p>
+    <button class="btn-confirm-green" id="ds-confirm-btn" onclick="confirmDelivery()">📤 Submit for Confirmation</button>
+    <button class="btn-ghost" onclick="closeOverlay('delivery-overlay')">Cancel</button>
+  </div>
+</div>
+
+<!-- ADD ITEM TO DELIVERY -->
+<div class="overlay" id="add-to-delivery-overlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Add Item</div>
+    <div class="sheet-sub">Search for an item that arrived but wasn't on this order.</div>
+    <label class="form-label">Item name</label>
+    <input class="form-input" type="text" id="atd-search" placeholder="Type to search…" oninput="renderAtdSearch()" style="margin-bottom:0;">
+    <div id="atd-results"></div>
+    <button class="btn-ghost" onclick="closeOverlay('add-to-delivery-overlay')">Cancel</button>
+  </div>
+</div>
+
+<!-- UNLOGGED DELIVERY -->
+<div class="overlay" id="unlogged-overlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Log Untracked Delivery</div>
+    <div class="sheet-sub">Items arrived without a prior order.</div>
+
+    <!-- Supplier filter + search -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+      <select id="ul-supplier-filter" class="form-input" style="margin-bottom:0;" onchange="renderUlSearch()">
+        <option value="">All Suppliers</option>
+      </select>
+      <input class="form-input" type="text" id="ul-search" placeholder="Search items…" oninput="renderUlSearch()" style="margin-bottom:0;">
+    </div>
+
+    <!-- Item list -->
+    <div id="ul-results" style="max-height:200px;overflow-y:auto;border:1px solid #e8e8e8;border-radius:8px;margin-bottom:10px;"></div>
+
+    <!-- Queue -->
+    <div id="ul-queue" style="display:none;margin-bottom:10px;">
+      <div style="font-size:11px;font-weight:700;color:#2e7d32;text-transform:uppercase;letter-spacing:0.5px;padding:6px 10px;background:#e8f5e9;border-radius:6px 6px 0 0;" id="ul-queue-label">0 items queued</div>
+      <div id="ul-queue-list" style="border:1.5px solid #c8e6c9;border-top:none;border-radius:0 0 8px 8px;overflow:hidden;"></div>
+    </div>
+
+    <!-- Date -->
+    <label class="form-label">Date Received</label>
+    <input class="form-input" type="date" id="ul-date" style="margin-bottom:12px;">
+
+    <p style="font-size:12px;color:#888;text-align:center;margin-bottom:6px;">Your manager will confirm this before stock is updated</p>
+    <button class="btn-primary" id="ul-confirm-btn" onclick="confirmUnloggedMulti()" disabled style="opacity:0.5;">📤 Submit for Confirmation</button>
+    <button class="btn-ghost" onclick="closeOverlay('unlogged-overlay')">Cancel</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── AUTH ──────────────────────────────────────────────────────────────────
+const HASH = '092a52f290f37f0c24b6ad1ba4ec1bfb85f7937a62af13382ef373ac4ef9d252';
+const SESSION_KEY = 'wt_del_auth';
+
+async function sha256(msg) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function doAuth() {
+  const val = document.getElementById('pw-input').value;
+  const hash = await sha256(val);
+  if (hash === HASH) {
+    if (document.getElementById('remember-me').checked) localStorage.setItem(SESSION_KEY, '1');
+    sessionStorage.setItem(SESSION_KEY, '1');
+    showApp();
+  } else {
+    document.getElementById('auth-error').textContent = 'Incorrect password. Try again.';
+    document.getElementById('pw-input').value = '';
+  }
+}
+
+function doLogout() {
+  localStorage.removeItem(SESSION_KEY);
+  sessionStorage.removeItem(SESSION_KEY);
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('pw-input').value = '';
+}
+
+function showApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'flex';
+  initApp();
+}
+
+if (localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY)) {
+  showApp();
+} else {
+  document.getElementById('auth-screen').style.display = 'flex';
+  setTimeout(() => document.getElementById('pw-input').focus(), 100);
+}
+
+// ── STATE ─────────────────────────────────────────────────────────────────
+let inventory = [];
+let reorderList = [];
+let activeDelivery = null;
+let ulSelectedItem = null;
+let currentTab = 'deliveries';
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+function initApp() {
+  db.collection('inventory').onSnapshot(snap => {
+    inventory = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (currentTab === 'search') renderSearch();
+    if (currentTab === 'move') renderMove();
+  });
+  db.collection('reorderList').onSnapshot(snap => {
+    reorderList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderDeliveries();
+  });
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('panel-' + tab).classList.add('active');
+  if (tab === 'move') renderMove();
+  if (tab === 'search') { renderSearch(); document.getElementById('inv-search').focus(); }
+}
+
+// ── SUPPLIER COLOUR ───────────────────────────────────────────────────────
+function supplierColor(name) {
+  const hues = [12, 35, 55, 130, 195, 220, 265, 320];
+  const h = hues[(name.charCodeAt(0) + name.length) % hues.length];
+  return { bg: `hsl(${h},60%,90%)`, color: `hsl(${h},45%,35%)` };
+}
+
+// ── DELIVERIES ────────────────────────────────────────────────────────────
+function renderDeliveries() {
+  const ordered = reorderList.filter(i => i.orderStatus === 'ordered' || i.orderStatus === 'backordered');
+  const badge = document.getElementById('delivery-badge');
+  const summaryEl = document.getElementById('delivery-summary');
+  const listEl = document.getElementById('deliveries-list');
+
+  badge.style.display = ordered.length > 0 ? 'flex' : 'none';
+  badge.textContent = ordered.length;
+
+  if (ordered.length === 0) {
+    summaryEl.style.display = 'none';
+    listEl.innerHTML = '<div class="empty">All caught up!<br><span style="font-size:12px;margin-top:6px;display:block;">No pending orders at the moment.</span></div>';
+    return;
+  }
+
+  const grouped = {};
+  ordered.forEach(i => {
+    const s = i.supplier || 'No Supplier';
+    if (!grouped[s]) grouped[s] = [];
+    grouped[s].push(i);
+  });
+  const suppliers = Object.keys(grouped).sort((a,b) => a === 'No Supplier' ? 1 : b === 'No Supplier' ? -1 : a.localeCompare(b));
+  const totalUnits = ordered.reduce((s, i) => s + (i.quantityToOrder || 0), 0);
+
+  summaryEl.style.display = 'block';
+  summaryEl.innerHTML = `
+    <div class="summary-banner">
+      <div class="summary-stat"><div class="summary-num">${suppliers.length}</div><div class="summary-label">Suppliers</div></div>
+      <div class="summary-divider"></div>
+      <div class="summary-stat"><div class="summary-num">${ordered.length}</div><div class="summary-label">Items</div></div>
+      <div class="summary-divider"></div>
+      <div class="summary-stat"><div class="summary-num orange">${totalUnits}</div><div class="summary-label">Units</div></div>
+    </div>`;
+
+  listEl.innerHTML = suppliers.map(sup => {
+    const items = grouped[sup];
+    const units = items.reduce((s,i) => s + (i.quantityToOrder||0), 0);
+    const col = supplierColor(sup);
+    return `
+      <div class="supplier-card" onclick="openDeliverySheet('${esc(sup)}')">
+        <div class="supplier-initial" style="background:${col.bg};color:${col.color};">${esc(sup.charAt(0).toUpperCase())}</div>
+        <div class="supplier-info">
+          <div class="supplier-name">${esc(sup)}</div>
+          <div class="supplier-meta">${items.length} item${items.length!==1?'s':''} · ${units} units ordered</div>
+        </div>
+        <div class="supplier-chevron">›</div>
+      </div>`;
+  }).join('');
+}
+
+// ── DELIVERY SHEET ────────────────────────────────────────────────────────
+function openDeliverySheet(supplier) {
+  const items = reorderList.filter(i =>
+    (i.supplier || 'No Supplier') === supplier &&
+    (i.orderStatus === 'ordered' || i.orderStatus === 'backordered')
+  );
+  activeDelivery = {
+    supplier,
+    items: items.map(item => ({
+      ...item,
+      deliveryStatus: 'full',
+      qtyReceived: item.quantityToOrder || 0,
+      shopQty: item.quantityToOrder || 0,
+      storeQty: 0
+    }))
+  };
+  document.getElementById('ds-title').textContent = supplier;
+  document.getElementById('ds-sub').textContent = `${items.length} item${items.length!==1?'s':''} on order`;
+  renderDsItems();
+  openOverlay('delivery-overlay');
+}
+
+function setItemStatus(idx, status) {
+  if (!activeDelivery) return;
+  const item = activeDelivery.items[idx];
+  item.deliveryStatus = status;
+  if (status === 'full') {
+    item.qtyReceived = item.quantityToOrder || 0;
+    item.shopQty = item.qtyReceived;
+    item.storeQty = 0;
+  } else if (status === 'not_arrived') {
+    item.qtyReceived = 0;
+    item.shopQty = 0;
+    item.storeQty = 0;
+  } else if (status === 'partial') {
+    // Keep existing partial qty or default to half
+    if (!item.qtyReceived || item.qtyReceived >= item.quantityToOrder) {
+      item.qtyReceived = Math.max(1, Math.floor((item.quantityToOrder || 1) / 2));
+    }
+    item.shopQty = item.qtyReceived;
+    item.storeQty = 0;
+  }
+  renderDsItems();
+}
+
+function setPartialQty(idx, val) {
+  if (!activeDelivery) return;
+  const item = activeDelivery.items[idx];
+  const qty = Math.max(1, Math.min(parseInt(val)||1, item.quantityToOrder||999));
+  item.qtyReceived = qty;
+  item.shopQty = qty;
+  item.storeQty = 0;
+  // Don't re-render to avoid losing focus - just update store display
+  const storeEl = document.getElementById('store-' + idx);
+  const remEl = document.getElementById('rem-' + idx);
+  if (storeEl) storeEl.value = 0;
+  if (remEl) { remEl.textContent = 0; remEl.className = 'split-remaining ok'; }
+}
+
+function renderDsItems() {
+  if (!activeDelivery) return;
+  document.getElementById('ds-items').innerHTML = activeDelivery.items.map((item, idx) => {
+    const ordered = item.quantityToOrder || 0;
+    const status = item.deliveryStatus || 'full'; // full | partial | not_arrived
+    const received = status === 'not_arrived' ? 0 : (item.qtyReceived || ordered);
+    
+    const statusBtns = `
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:10px 0 4px;">
+        <button onclick="setItemStatus(${idx},'full')" style="padding:8px 4px;border:2px solid ${status==='full'?'#2e7d32':'#e0e0e0'};background:${status==='full'?'#e8f5e9':'white'};border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;color:${status==='full'?'#2e7d32':'#888'}">
+          ✅ All arrived<br><span style="font-size:11px;font-weight:400">${ordered} units</span>
+        </button>
+        <button onclick="setItemStatus(${idx},'partial')" style="padding:8px 4px;border:2px solid ${status==='partial'?'#e65100':'#e0e0e0'};background:${status==='partial'?'#fff3e0':'white'};border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;color:${status==='partial'?'#e65100':'#888'}">
+          ⚡ Partial<br><span style="font-size:11px;font-weight:400">enter qty below</span>
+        </button>
+        <button onclick="setItemStatus(${idx},'not_arrived')" style="padding:8px 4px;border:2px solid ${status==='not_arrived'?'#c62828':'#e0e0e0'};background:${status==='not_arrived'?'#ffebee':'white'};border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;color:${status==='not_arrived'?'#c62828':'#888'}">
+          ❌ Not arrived<br><span style="font-size:11px;font-weight:400">stays on order</span>
+        </button>
+      </div>`;
+
+    const partialInput = status === 'partial' ? `
+      <div style="margin:8px 0;">
+        <div class="qty-label">How many arrived?</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <input class="qty-input-large" type="number" min="1" max="${ordered}" value="${received}" 
+            oninput="setPartialQty(${idx},this.value)"
+            style="width:80px;border-color:#e65100;">
+          <span style="font-size:13px;color:#888;">of ${ordered} ordered · <strong style="color:#e65100;">${ordered - received} still to come</strong></span>
+        </div>
+      </div>` : '';
+
+    const splitHtml = (status !== 'not_arrived' && received > 0) ? `
+      <div style="margin-top:10px;">
+        <div class="split-label" style="margin-bottom:6px;">Where is it going?</div>
+        <div class="split-row">
+          <div class="split-block">
+            <div class="split-label">🏪 Shop</div>
+            <input class="split-input" type="number" min="0" max="${received}" value="${item.shopQty || received}" oninput="onShopChange(${idx},this.value)">
+          </div>
+          <div class="split-block">
+            <div class="split-label">📦 Big Store</div>
+            <input class="split-input readonly" type="number" id="store-${idx}" value="${item.storeQty || 0}" readonly>
+          </div>
+          <div class="split-block">
+            <div class="split-label">Remaining</div>
+            <div id="rem-${idx}" class="split-remaining ${received - (item.shopQty||received) - (item.storeQty||0) === 0 ? 'ok' : 'warn'}" style="padding:9px 0;font-size:16px;text-align:center;">${received - (item.shopQty||received) - (item.storeQty||0)}</div>
+          </div>
+        </div>
+      </div>` : '';
+
+    const statusTag = status === 'not_arrived' 
+      ? '<span style="background:#ffebee;color:#c62828;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;margin-left:6px;">Not arriving</span>'
+      : status === 'partial' 
+      ? '<span style="background:#fff3e0;color:#e65100;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;margin-left:6px;">Partial</span>'
+      : '';
+
+    return `
+      <div class="delivery-item" style="border-left:3px solid ${status==='not_arrived'?'#ef9a9a':status==='partial'?'#ffb74d':'#a5d6a7'};">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div class="delivery-item-name">${esc(item.name)}${statusTag}</div>
+            <div class="delivery-item-meta">Ordered: ${ordered} units${item.orderDate ? ' · ' + fmtDate(item.orderDate) : ''}</div>
+          </div>
+        </div>
+        ${statusBtns}
+        ${partialInput}
+        ${splitHtml}
+      </div>`;
+  }).join('');
+}
+
+
+function onReceivedChange(idx, val) {
+  if (!activeDelivery) return;
+  activeDelivery.items[idx].qtyReceived = Math.max(0, parseInt(val) || 0);
+  activeDelivery.items[idx].shopQty = activeDelivery.items[idx].qtyReceived;
+  activeDelivery.items[idx].storeQty = 0;
+  renderDsItems();
+}
+
+function onShopChange(idx, val) {
+  if (!activeDelivery) return;
+  const received = activeDelivery.items[idx].qtyReceived;
+  const shop = Math.max(0, Math.min(parseInt(val) || 0, received));
+  activeDelivery.items[idx].shopQty = shop;
+  activeDelivery.items[idx].storeQty = Math.max(0, received - shop);
+  const storeInput = document.getElementById('store-' + idx);
+  const remEl = document.getElementById('rem-' + idx);
+  if (storeInput) storeInput.value = activeDelivery.items[idx].storeQty;
+  if (remEl) {
+    const rem = received - shop - activeDelivery.items[idx].storeQty;
+    remEl.textContent = rem;
+    remEl.className = 'split-remaining ' + (rem === 0 ? 'ok' : 'warn');
+  }
+}
+
+async function confirmDelivery() {
+  if (!activeDelivery) return;
+  const btn = document.getElementById('ds-confirm-btn');
+  btn.disabled = true; btn.textContent = 'Processing…';
+  (async () => {
+    try {
+      const now = new Date().toISOString();
+      const today = now.split('T')[0];
+      const pendingItems = [];
+
+      for (const item of activeDelivery.items) {
+        const status = item.deliveryStatus || 'full';
+        if (status === 'not_arrived') {
+          // Leave in reorderList as-is — nothing to do
+          continue;
+        }
+        const received = item.qtyReceived || (status === 'full' ? (item.quantityToOrder || 0) : 0);
+        if (received === 0) continue;
+
+        const shopQty = item.shopQty || received;
+        const storeQty = item.storeQty || 0;
+        const orderDate = new Date(item.orderDate || item.addedDate || now);
+        const leadTimeDays = Math.max(0, Math.round((new Date(now) - orderDate) / 86400000));
+        const isPartial = status === 'partial';
+        const remaining = (item.quantityToOrder || 0) - received;
+
+        pendingItems.push({
+          itemId: item.id,
+          itemName: item.name,
+          supplier: item.supplier || '',
+          category: item.category || '',
+          quantityToOrder: item.quantityToOrder || 0,
+          quantityReceived: received,
+          remaining: isPartial ? remaining : 0,
+          isPartial,
+          toShop: shopQty,
+          toStorage: storeQty,
+          orderDate: item.orderDate || item.addedDate || now,
+          deliveredDate: today,
+          leadTimeDays,
+          source: 'delivery-app',
+          loggedBy: 'colleague',
+          loggedAt: now
+        });
+
+        // Update reorderList status so item leaves the "Ordered" section
+        if (isPartial && remaining > 0) {
+          // Partial: update to show remaining qty, mark as partial
+          await db.collection('reorderList').doc(item.id).update({
+            quantityToOrder: remaining,
+            orderStatus: 'awaiting_confirmation',
+            quantityReceived: received,
+            partialNote: `${received} of ${item.quantityToOrder} received ${today}`
+          });
+        } else {
+          // Full delivery: mark as awaiting confirmation (will be deleted by manager)
+          await db.collection('reorderList').doc(item.id).update({
+            orderStatus: 'awaiting_confirmation',
+            quantityReceived: received
+          });
+        }
+      }
+
+      // Write to pendingDeliveries for manager confirmation
+      if (pendingItems.length > 0) {
+        await db.collection('pendingDeliveries').add({
+          items: pendingItems,
+          supplier: activeDelivery.supplier || '',
+          submittedAt: now,
+          status: 'pending',
+          source: 'delivery-app'
+        });
+      }
+
+      closeOverlay('delivery-overlay');
+      activeDelivery = null;
+      showToast(`✅ ${pendingItems.length} item${pendingItems.length!==1?'s':''} sent for confirmation`);
+      renderDeliveries();
+    } catch(e) {
+      btn.disabled = false; btn.textContent = '📤 Submit for Confirmation';
+      alert('Error submitting delivery: ' + e.message + '\n\nPlease try again or contact Sandro.');
+      console.error('Delivery error:', e);
+    }
+  })();
+}
+
+
+function openAddItemToDelivery() {
+  document.getElementById('atd-search').value = '';
+  document.getElementById('atd-results').innerHTML = '';
+  openOverlay('add-to-delivery-overlay');
+}
+
+function renderAtdSearch() {
+  const q = document.getElementById('atd-search').value.toLowerCase().trim();
+  const el = document.getElementById('atd-results');
+  if (!q) { el.innerHTML = ''; return; }
+  const ids = new Set(activeDelivery ? activeDelivery.items.map(i => i.id) : []);
+  const matches = inventory.filter(i => !ids.has(i.id) && i.name.toLowerCase().includes(q)).slice(0,8);
+  if (!matches.length) { el.innerHTML = '<div style="padding:12px;color:var(--muted);font-size:13px;">No items found</div>'; return; }
+  el.innerHTML = '<div class="search-results-drop">' + matches.map(item => `
+    <div class="search-result-row" onclick="addItemToDelivery('${item.id}')">
+      <div><div class="search-result-name">${esc(item.name)}</div><div class="search-result-meta">${esc(item.supplier||'No supplier')}</div></div>
+      <span style="color:var(--orange);font-size:1.2rem;font-weight:700;">+</span>
+    </div>`).join('') + '</div>';
+}
+
+function addItemToDelivery(itemId) {
+  const item = inventory.find(i => i.id === itemId);
+  if (!item || !activeDelivery) return;
+  activeDelivery.items.push({ ...item, quantityToOrder: 0, qtyReceived: 0, shopQty: 0, storeQty: 0, unlogged: true });
+  renderDsItems();
+  closeOverlay('add-to-delivery-overlay');
+  showToast(`Added ${item.name}`);
+}
+
+// ── UNLOGGED DELIVERY ─────────────────────────────────────────────────────
+function openUnloggedSheet() {
+  ulQueue = [];
+  document.getElementById('ul-search').value = '';
+  document.getElementById('ul-supplier-filter').value = '';
+  document.getElementById('ul-date').value = new Date().toISOString().split('T')[0];
+  // Populate supplier filter
+  const suppliers = [...new Set(inventory.map(i => i.supplier).filter(Boolean))].sort();
+  const sel = document.getElementById('ul-supplier-filter');
+  sel.innerHTML = '<option value="">All Suppliers</option>' + suppliers.map(s => `<option value="${s}">${s}</option>`).join('');
+  renderUlSearch();
+  renderUlQueue();
+  openOverlay('unlogged-overlay');
+}
+
+let ulQueue = []; // [{item, qty, toShop, toStore}]
+
+function renderUlSearch() {
+  const search = (document.getElementById('ul-search').value || '').toLowerCase();
+  const supplier = document.getElementById('ul-supplier-filter').value;
+  const filtered = inventory.filter(item => {
+    const supMatch = !supplier || item.supplier === supplier;
+    const nameMatch = !search || item.name.toLowerCase().includes(search);
+    const notInQueue = !ulQueue.find(q => q.item.id === item.id);
+    return supMatch && nameMatch && notInQueue;
+  }).slice(0, 20);
+  const container = document.getElementById('ul-results');
+  if (filtered.length === 0) {
+    container.innerHTML = '<div style="padding:12px;text-align:center;color:#aaa;font-size:13px;">No items found</div>';
+    return;
+  }
+  container.innerHTML = filtered.map(item => `
+    <div onclick="ulAddItem('${item.id}')" style="padding:10px 12px;border-bottom:1px solid #f5f5f5;cursor:pointer;display:flex;align-items:center;justify-content:space-between;background:white;"
+      onmouseover="this.style.background='#f0f7ff'" onmouseout="this.style.background='white'">
+      <div>
+        <div style="font-weight:600;font-size:14px;">${item.name}</div>
+        <div style="font-size:12px;color:#888;">${item.supplier || '—'}</div>
+      </div>
+      <span style="color:#2196f3;font-size:18px;font-weight:700;">+</span>
+    </div>
+  `).join('');
+}
+
+function ulAddItem(itemId) {
+  const item = inventory.find(i => i.id === itemId);
+  if (!item || ulQueue.find(q => q.item.id === itemId)) return;
+  ulQueue.push({ item, qty: 1, toShop: 1, toStore: 0 });
+  renderUlSearch();
+  renderUlQueue();
+}
+
+function renderUlQueue() {
+  const queueDiv = document.getElementById('ul-queue');
+  const listDiv = document.getElementById('ul-queue-list');
+  const label = document.getElementById('ul-queue-label');
+  const btn = document.getElementById('ul-confirm-btn');
+  if (ulQueue.length === 0) {
+    queueDiv.style.display = 'none';
+    btn.disabled = true; btn.style.opacity = '0.5';
+    return;
+  }
+  queueDiv.style.display = 'block';
+  label.textContent = ulQueue.length + ' item' + (ulQueue.length !== 1 ? 's' : '') + ' queued — enter quantities';
+  btn.disabled = false; btn.style.opacity = '1';
+  listDiv.innerHTML = ulQueue.map((entry, idx) => `
+    <div style="padding:10px 12px;border-bottom:${idx < ulQueue.length-1 ? '1px solid #f0f0f0' : 'none'};background:white;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <span style="font-weight:600;font-size:14px;">${entry.item.name}</span>
+        <button onclick="ulRemove(${idx})" style="background:#ffebee;border:none;color:#c62828;border-radius:4px;padding:2px 7px;cursor:pointer;font-size:13px;">✕</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+        <div>
+          <div style="font-size:11px;color:#888;font-weight:600;margin-bottom:3px;">Received</div>
+          <input type="number" min="0" value="${entry.qty}" oninput="ulUpdateQty(${idx}, this.value)"
+            style="width:100%;padding:6px;border:1px solid #ddd;border-radius:5px;font-size:15px;font-weight:600;text-align:center;">
+        </div>
+        <div>
+          <div style="font-size:11px;color:#888;font-weight:600;margin-bottom:3px;">🏪 Shop</div>
+          <input type="number" min="0" value="${entry.toShop}" oninput="ulUpdateShop(${idx}, this.value)"
+            data-ul-shop="${idx}"
+            style="width:100%;padding:6px;border:1px solid #ddd;border-radius:5px;font-size:15px;text-align:center;">
+        </div>
+        <div>
+          <div style="font-size:11px;color:#2196f3;font-weight:600;margin-bottom:3px;">📦 Store</div>
+          <div data-ul-store="${idx}" style="padding:6px;border:1px solid #bbdefb;border-radius:5px;background:#e3f2fd;color:#1565c0;font-size:15px;font-weight:600;text-align:center;">${entry.toStore}</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function ulUpdateQty(idx, val) {
+  const qty = parseInt(val) || 0;
+  ulQueue[idx].qty = qty;
+  ulQueue[idx].toShop = qty;
+  ulQueue[idx].toStore = 0;
+  // Update dependent fields without re-rendering (avoids losing keyboard focus)
+  const shopEl = document.querySelector(`[data-ul-shop="${idx}"]`);
+  const storeEl = document.querySelector(`[data-ul-store="${idx}"]`);
+  if (shopEl) shopEl.value = qty;
+  if (storeEl) storeEl.textContent = 0;
+}
+
+function ulUpdateShop(idx, val) {
+  const shop = Math.max(0, Math.min(parseInt(val) || 0, ulQueue[idx].qty));
+  ulQueue[idx].toShop = shop;
+  ulQueue[idx].toStore = Math.max(0, ulQueue[idx].qty - shop);
+  // Update store display without re-rendering
+  const storeEl = document.querySelector(`[data-ul-store="${idx}"]`);
+  if (storeEl) storeEl.textContent = ulQueue[idx].toStore;
+}
+
+function ulRemove(idx) {
+  ulQueue.splice(idx, 1);
+  renderUlSearch();
+  renderUlQueue();
+}
+
+async function confirmUnloggedMulti() {
+  if (ulQueue.length === 0) return;
+  const delivDate = document.getElementById('ul-date').value || new Date().toISOString().split('T')[0];
+  try {
+    const now = new Date().toISOString();
+    const pendingItems = ulQueue
+      .filter(entry => entry.qty > 0)
+      .map(entry => ({
+        itemId: entry.item.id,
+        itemName: entry.item.name,
+        supplier: entry.item.supplier || '',
+        category: entry.item.category || '',
+        quantityToOrder: entry.qty,
+        quantityReceived: entry.qty,
+        remaining: 0,
+        isPartial: false,
+        toShop: entry.toShop,
+        toStorage: entry.toStore,
+        orderDate: delivDate,
+        deliveredDate: delivDate,
+        leadTimeDays: 0,
+        unloggedOrder: true,
+        source: 'delivery-app',
+        loggedBy: 'colleague',
+        loggedAt: now
+      }));
+
+    if (pendingItems.length > 0) {
+      // Group by supplier if possible, otherwise one batch
+      const supplier = [...new Set(pendingItems.map(i => i.supplier))].join(', ');
+      await db.collection('pendingDeliveries').add({
+        items: pendingItems,
+        supplier,
+        submittedAt: now,
+        status: 'pending',
+        source: 'delivery-app',
+        unloggedOrder: true
+      });
+    }
+
+    closeOverlay('unlogged-overlay');
+    showToast('📤 ' + pendingItems.length + ' item' + (pendingItems.length !== 1 ? 's' : '') + ' sent for confirmation');
+    ulQueue = [];
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+
+
+// ── MOVE STOCK ────────────────────────────────────────────────────────────
+function renderMove() {
+  const q = (document.getElementById('move-search').value||'').toLowerCase();
+  const items = inventory
+    .filter(i => (i.quantityStore||0) > 0 && (!q || i.name.toLowerCase().includes(q) || (i.supplier||'').toLowerCase().includes(q)))
+    .sort((a,b) => (b.quantityStore||0) - (a.quantityStore||0));
+  const el = document.getElementById('move-list');
+  if (!items.length) { el.innerHTML = `<div class="empty">${q ? 'No matching items in Big Store' : 'No items in Big Store right now'}</div>`; return; }
+  el.innerHTML = items.map(item => `
+    <div class="item-card" style="flex-direction:column;align-items:stretch;gap:8px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div class="item-left">
+          <div class="item-name">${esc(item.name)}</div>
+          <div class="item-meta">${esc(item.supplier||'')}${item.location?' · '+esc(item.location):''}</div>
+        </div>
+        <div class="item-right">
+          <div class="item-qty" style="color:var(--blue);">${item.quantityStore||0}</div>
+          <div class="item-unit">in Big Store</div>
+        </div>
+      </div>
+      <div class="move-input-row">
+        <input class="move-input" type="number" min="1" max="${item.quantityStore||0}" id="move-${item.id}" placeholder="Qty to move to shop">
+        <button class="move-btn" onclick="confirmMove('${item.id}')">↗️ Move to Shop</button>
+      </div>
+    </div>`).join('');
+}
+
+async function confirmMove(itemId) {
+  const item = inventory.find(i => i.id === itemId);
+  if (!item) return;
+  const qty = parseInt(document.getElementById('move-' + itemId).value) || 0;
+  if (qty <= 0) { showToast('Enter a quantity'); return; }
+  if (qty > (item.quantityStore||0)) { showToast('Not enough in Big Store'); return; }
+  try {
+    await db.collection('inventory').doc(itemId).update({
+      quantityStore: (item.quantityStore||0) - qty,
+      quantityShop: (item.quantityShop||0) + qty,
+      quantity: (item.quantityShop||0) + qty + (item.quantityStore||0) - qty + (item.quantityBigStore||0)
+    });
+    await db.collection('activityLog').add({
+      type: 'transfer', description: `Moved ${qty} × ${item.name}: Big Store → Shop`,
+      details: { itemId, qty, direction: 'bigstore-to-shop' },
+      timestamp: Date.now(), date: new Date().toISOString(), user: 'Staff (Delivery App)'
+    });
+    showToast(`✅ Moved ${qty} × ${item.name} to Shop`);
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ── SEARCH ────────────────────────────────────────────────────────────────
+function renderSearch() {
+  const q = (document.getElementById('inv-search').value||'').toLowerCase();
+  const el = document.getElementById('search-list');
+  if (!q) { el.innerHTML = '<div class="empty">Search for any item</div>'; return; }
+  const matches = inventory.filter(i =>
+    i.name.toLowerCase().includes(q) ||
+    (i.category||'').toLowerCase().includes(q) ||
+    (i.supplier||'').toLowerCase().includes(q) ||
+    (i.location||'').toLowerCase().includes(q)
+  ).slice(0,20);
+  if (!matches.length) { el.innerHTML = '<div class="empty">No items found</div>'; return; }
+  el.innerHTML = matches.map(item => {
+    const shop = item.quantityShop||0;
+    const store = item.quantityStore||0;
+    const total = shop + store;
+    const alertColor = total <= (item.criticalLevel||5) ? 'var(--red)' : total <= (item.warningLevel||10) ? '#e67e22' : 'var(--green)';
+    return `
+      <div class="item-card">
+        <div class="item-left">
+          <div class="item-name">${esc(item.name)}</div>
+          <div class="item-meta">${esc(item.category||'')}${item.location?' · '+esc(item.location):''}</div>
+          <div class="stock-pills">
+            <span class="pill pill-shop">🏪 ${shop}</span>
+            <span class="pill pill-store">📦 ${store}</span>
+          </div>
+        </div>
+        <div class="item-right">
+          <div class="item-qty" style="color:${alertColor};">${total}</div>
+          <div class="item-unit">total</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────────
+function openOverlay(id) { document.getElementById(id).classList.add('open'); }
+function closeOverlay(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.overlay').forEach(el => el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); }));
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtDate(iso) { try { return new Date(iso).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}); } catch { return ''; } }
+</script>
+</body>
+</html>
